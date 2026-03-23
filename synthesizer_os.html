@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SS Tracker">
+<meta name="theme-color" content="#f9f8f6">
+<title>Synthesizer Scaling OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f9f8f6;
+  --surface:#ffffff;
+  --surface2:#f4f3f0;
+  --surface3:#eeedea;
+  --border:rgba(0,0,0,0.08);
+  --border2:rgba(0,0,0,0.14);
+  --text:#1a1a18;
+  --text2:#6b6b67;
+  --text3:#a8a8a3;
+  --teal:#1D9E75;
+  --teal-dim:#e1f5ee;
+  --teal-mid:#9fe1cb;
+  --teal-dark:#085041;
+  --red:#d93025;
+  --red-dim:#fdf0ef;
+  --red-mid:#f7c4c0;
+  --amber:#c47a0a;
+  --amber-dim:#fef9ec;
+  --amber-mid:#f5d68a;
+  --blue:#1a6fa8;
+  --blue-dim:#eef4fb;
+  --font:'DM Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+  --r:8px;--r2:12px;--r3:16px;
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow2:0 4px 12px rgba(0,0,0,0.08);
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:14px;line-height:1.5}
+.app{max-width:680px;margin:0 auto;padding:1.5rem 1rem 3rem}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.75rem}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.logo{width:36px;height:36px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--shadow)}
+.logo-s{font-size:13px;font-weight:600;color:#fff;letter-spacing:-.01em}
+.app-title{font-size:15px;font-weight:600;color:var(--text)}
+.app-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.hdr-date{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+/* TABS */
+.top-tabs{display:flex;gap:2px;margin-bottom:1.5rem;background:var(--surface);border-radius:var(--r2);padding:3px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.ttab{flex:1;padding:7px 6px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:var(--font);transition:all .15s}
+.ttab:hover{background:var(--surface2);color:var(--text)}
+.ttab.active{background:var(--surface);color:var(--text);font-weight:600;box-shadow:var(--shadow);border:1px solid var(--border)}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:1.25rem;margin-bottom:12px;box-shadow:var(--shadow)}
+.card.alert-card{border-color:var(--red-mid);background:var(--red-dim)}
+
+/* LABELS */
+.lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:.5rem}
+
+/* ALERT BAR */
+.alert-bar{background:var(--red-dim);border:1px solid var(--red-mid);border-radius:var(--r2);padding:.65rem 1rem;margin-bottom:.875rem;font-size:12px;color:var(--red);display:flex;align-items:center;gap:8px;font-weight:500}
+.adot{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MONTH TABS */
+.month-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1rem}
+.mtab{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font);transition:all .12s}
+.mtab:hover{border-color:var(--border2);color:var(--text)}
+.mtab.active{background:var(--teal-dim);border-color:var(--teal-mid);color:var(--teal-dark);font-weight:600}
+.mtab.has-data{border-color:var(--teal-mid)}
+
+/* CALENDAR */
+.cal-dows{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
+.cal-dow{text-align:center;font-size:9px;font-weight:600;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;padding:2px 0}
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:1rem}
+.dc{aspect-ratio:1;border-radius:6px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:11px;font-weight:500;color:var(--text3);background:var(--surface2);transition:all .12s;position:relative}
+.dc:hover{border-color:var(--border2);color:var(--text);background:var(--surface)}
+.dc.active{border-color:var(--teal);background:var(--teal-dim);color:var(--teal-dark);font-weight:600}
+.dc.has-data{background:var(--surface);border-color:var(--teal-mid);color:var(--text)}
+.dc.has-data.active{background:var(--teal-dim);border-color:var(--teal)}
+.dc.empty{opacity:0;pointer-events:none}
+.dc.today-c{border-color:var(--amber);color:var(--amber)!important;font-weight:600}
+.dc .ddot{width:4px;height:4px;border-radius:50%;background:var(--teal);position:absolute;bottom:3px}
+
+/* DAY FORM */
+.day-form{background:var(--surface2);border-radius:var(--r2);padding:1rem;margin-bottom:1rem;border:1px solid var(--border)}
+.day-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:.875rem;display:flex;align-items:center;justify-content:space-between}
+.fg{margin-bottom:.75rem}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ff{display:flex;flex-direction:column;gap:4px}
+.ff label{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.ff input{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;font-size:13px;font-weight:500;color:var(--text);font-family:var(--mono);outline:none;transition:border-color .12s;box-shadow:var(--shadow)}
+.ff input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(29,158,117,0.1)}
+.ff-full{grid-column:span 2}
+.calc-chip{font-size:13px;font-weight:500;background:var(--surface);border-radius:var(--r);padding:7px 10px;font-family:var(--mono);border:1px solid var(--border);color:var(--text2)}
+.calc-chip.good{background:var(--teal-dim);color:var(--teal-dark);border-color:var(--teal-mid)}
+.calc-chip.bad{background:var(--red-dim);color:var(--red);border-color:var(--red-mid)}
+
+/* BUTTONS */
+.btn-primary{background:var(--teal);border:none;color:#fff;padding:7px 16px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;box-shadow:var(--shadow)}
+.btn-primary:hover{background:#179060}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .12s}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:var(--red-dim);border:1px solid var(--red-mid);color:var(--red);padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .12s}
+.btn-danger:hover{background:var(--red-mid)}
+.btn-clear{background:#fff4e6;border:1px solid #f5c87a;color:#c47a0a;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s}
+.btn-clear:hover{background:#ffe8b8;border-color:#e8a832}
+.saved-ok{font-size:11px;color:var(--teal);margin-left:8px;opacity:0;transition:opacity .3s;font-family:var(--mono)}
+.add-btn{background:transparent;border:1.5px dashed var(--border2);border-radius:var(--r);padding:8px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font);margin-top:.875rem;width:100%;transition:all .12s;font-weight:500}
+.add-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-dim)}
+.del-btn{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0 4px;line-height:1;transition:color .12s}
+.del-btn:hover{color:var(--red)}
+.restore-btn{background:var(--teal-dim);border:1px solid var(--teal-mid);color:var(--teal-dark);cursor:pointer;font-size:11px;font-weight:500;padding:3px 8px;border-radius:var(--r);font-family:var(--font);transition:all .12s}
+.restore-btn:hover{background:var(--teal-mid)}
+
+/* METRICS */
+.metrics-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:.875rem}
+.mc{background:var(--surface2);border-radius:var(--r);padding:.75rem .5rem;text-align:center;border:1px solid var(--border)}
+.mc .mv{font-size:17px;font-weight:600;color:var(--text);font-family:var(--mono)}
+.mc .ml{font-size:9px;color:var(--text3);margin-top:2px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.mc.good{background:var(--teal-dim);border-color:var(--teal-mid)}.mc.good .mv{color:var(--teal-dark)}.mc.good .ml{color:var(--teal)}
+.mc.bad{background:var(--red-dim);border-color:var(--red-mid)}.mc.bad .mv{color:var(--red)}.mc.bad .ml{color:var(--red)}
+.mc.warn{background:var(--amber-dim);border-color:var(--amber-mid)}.mc.warn .mv{color:var(--amber)}.mc.warn .ml{color:var(--amber)}
+
+/* INSIGHT */
+.ins{border-radius:var(--r);padding:.875rem 1rem;font-size:12px;line-height:1.7;border-left:3px solid var(--teal);background:var(--teal-dim);color:var(--teal-dark)}
+.ins.bad{border-left-color:var(--red);background:var(--red-dim);color:var(--red)}
+.ins.warn{border-left-color:var(--amber);background:var(--amber-dim);color:var(--amber)}
+.ins strong{font-weight:600}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:.875rem 0}
+
+/* SALES TABLE */
+.st{width:100%;border-collapse:collapse;font-size:12px}
+.st th{text-align:left;padding:6px 8px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);border-bottom:1px solid var(--border);background:var(--surface2)}
+.st td{padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+.st tr:last-child td{border-bottom:none}
+.st tr:hover td{background:var(--surface2)}
+.st tr.rowalert td{background:var(--red-dim)!important}
+.st tr.trashed td{background:var(--surface2)!important;opacity:.6}
+.st input,.st select{background:transparent;border:none;outline:none;font-size:12px;color:var(--text);font-family:var(--mono);width:100%;padding:0}
+.st input:focus,.st select:focus{background:var(--teal-dim);border-radius:4px;padding:2px 4px}
+.st select option{background:#fff;color:var(--text)}
+
+/* FILTER CHIPS */
+.fchips{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:.875rem}
+.fchip{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font);transition:all .12s;letter-spacing:.03em}
+.fchip:hover{border-color:var(--border2);color:var(--text)}
+.fchip.active{background:var(--teal-dim);border-color:var(--teal-mid);color:var(--teal-dark)}
+
+/* OVERVIEW */
+.ov-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:1rem}
+.kpi{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:1rem;text-align:center}
+.kpi .kv{font-size:22px;font-weight:600;font-family:var(--mono);color:var(--text)}
+.kpi .kl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:600}
+.kpi.good{border-color:var(--teal-mid);background:var(--teal-dim)}.kpi.good .kv{color:var(--teal-dark)}
+.kpi.bad{border-color:var(--red-mid);background:var(--red-dim)}.kpi.bad .kv{color:var(--red)}
+.kpi.warn{border-color:var(--amber-mid);background:var(--amber-dim)}.kpi.warn .kv{color:var(--amber)}
+.cw{position:relative;width:100%;height:180px;margin-top:.75rem}
+
+/* ROADMAP BAR */
+.rm-bar{display:flex;border-radius:var(--r);overflow:hidden;border:1px solid var(--border);margin-bottom:1.25rem;box-shadow:var(--shadow)}
+.rm-s{flex:1;padding:.5rem .25rem;text-align:center;font-size:10px;font-weight:600;color:var(--text3);border-right:1px solid var(--border);line-height:1.3;background:var(--surface2)}
+.rm-s:last-child{border-right:none}
+.rm-s.done{background:var(--teal-dim);color:var(--teal)}
+.rm-s.current{background:var(--teal);color:#fff}
+.rm-s.ahead{background:var(--surface2);color:var(--text3)}
+.rm-dot{width:5px;height:5px;border-radius:50%;margin:0 auto 3px;background:currentColor;opacity:.6}
+.rm-s.current .rm-dot{opacity:1;background:rgba(255,255,255,0.8)}
+
+/* FUNNEL BAR */
+.funnel-bar{display:flex;border-radius:var(--r);overflow:hidden;border:1px solid var(--border);margin-bottom:1rem;box-shadow:var(--shadow)}
+.fb-s{flex:1;padding:.6rem .25rem;text-align:center;font-size:11px;font-weight:600;border-right:1px solid var(--border);color:var(--text2);background:var(--surface2)}
+.fb-s:last-child{border-right:none}
+.fb-s.fb-active{outline:2px solid var(--teal);outline-offset:-2px;color:var(--teal-dark)!important;background:var(--teal-dim)!important;z-index:1;position:relative}
+
+/* DIAGNOSIS */
+.diag-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:1.25rem;margin-bottom:12px;box-shadow:var(--shadow)}
+.diag-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:.4rem;line-height:1.4}
+.diag-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:1rem}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.875rem}
+.badge-attract{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-mid)}
+.badge-convert{background:var(--blue-dim);color:var(--blue);border:1px solid #b8d4ec}
+.badge-deliver{background:var(--teal-dim);color:var(--teal-dark);border:1px solid var(--teal-mid)}
+.path-steps{display:flex;flex-direction:column;gap:5px;margin:.75rem 0}
+.ps{display:flex;align-items:center;gap:10px;padding:.625rem .875rem;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border);font-size:12px;color:var(--text2)}
+.ps-n{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;font-family:var(--mono)}
+.ps-n.warm{background:var(--amber-dim);color:var(--amber)}
+.ps-n.mid{background:var(--blue-dim);color:var(--blue)}
+.ps-n.cold{background:var(--surface3);color:var(--text3)}
+.ps-conn{width:1px;height:8px;background:var(--border2);margin-left:22px}
+.ps-label{font-weight:600;color:var(--text);font-size:12px}
+.action-list{display:flex;flex-direction:column}
+.action-item{display:flex;gap:10px;padding:.625rem 0;border-bottom:1px solid var(--border)}
+.action-item:last-child{border-bottom:none}
+.action-n{font-size:11px;font-weight:700;color:var(--teal);min-width:18px;padding-top:1px;font-family:var(--mono)}
+.action-t{font-size:12px;color:var(--text2);line-height:1.6}
+.action-t strong{color:var(--text);font-weight:600}
+.rule-box{background:var(--surface2);border-radius:var(--r);padding:.875rem 1rem;margin-top:.875rem;border-left:3px solid var(--teal);font-size:12px;color:var(--text2);line-height:1.7}
+.rule-box strong{color:var(--text);font-weight:600}
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:var(--teal-dim);border:1px solid var(--teal-mid);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:600;color:var(--teal-dark);margin-bottom:1rem}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:pulse 2s ease-in-out infinite}
+.diag-section-title{font-size:12px;font-weight:600;color:var(--text);margin:.875rem 0 .5rem;padding-top:.875rem;border-top:1px solid var(--border)}
+
+/* TRASH */
+.trash-section{margin-top:1rem}
+.trash-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:.5rem 0}
+.trash-toggle{font-size:12px;font-weight:500;color:var(--text3);display:flex;align-items:center;gap:6px}
+.trash-count{background:var(--surface3);border-radius:20px;padding:1px 7px;font-size:10px;font-weight:600;color:var(--text3)}
+
+/* CSV EXPORT */
+.export-row{display:flex;gap:8px;align-items:center;margin-top:.875rem;padding-top:.875rem;border-top:1px solid var(--border)}
+
+/* SECTION DIVIDER */
+.sec-div{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin:.75rem 0 .5rem;padding-bottom:4px;border-bottom:1px solid var(--border)}
+
+/* YEAR STRIP */
+.year-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-bottom:0}
+.ys-cell{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:.5rem .375rem;text-align:center;cursor:pointer;transition:all .12s;position:relative}
+.ys-cell:hover{border-color:var(--border2);background:var(--surface)}
+.ys-cell.ys-active{border-color:var(--teal);background:var(--teal-dim)}
+.ys-cell.ys-future{opacity:.4}
+.ys-month{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.ys-active .ys-month{color:var(--teal-dark)}
+.ys-rev{font-size:12px;font-weight:600;color:var(--text);font-family:var(--mono)}
+.ys-active .ys-rev{color:var(--teal-dark)}
+.ys-sub{font-size:9px;color:var(--text3);margin-top:2px}
+.ys-active .ys-sub{color:var(--teal)}
+.ys-bar-wrap{height:3px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden}
+.ys-bar{height:100%;border-radius:2px;background:var(--teal);transition:width .3s}
+.ys-cell.ys-warn .ys-bar{background:var(--amber)}
+.ys-cell.ys-bad .ys-bar{background:var(--red)}
+.year-totals-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.yt-chip{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:.5rem .75rem;display:flex;align-items:center;justify-content:space-between}
+.yt-chip .ytv{font-size:14px;font-weight:600;color:var(--text);font-family:var(--mono)}
+.yt-chip .ytl{font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.yt-chip.good .ytv{color:var(--teal-dark)}
+.yt-chip.good{background:var(--teal-dim);border-color:var(--teal-mid)}
+
+/* NOTES JOURNAL */
+.note-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:1rem;margin-bottom:8px;transition:border-color .12s;cursor:pointer}
+.note-card:hover{border-color:var(--border2)}
+.note-card.has-win{border-left:3px solid var(--teal)}
+.note-card.has-stuck{border-left:3px solid var(--red)}
+.note-card.has-objection{border-left:3px solid var(--amber)}
+.note-card.has-idea{border-left:3px solid var(--blue)}
+.note-card.has-noshow{border-left:3px solid var(--text3)}
+.note-card.has-followup{border-left:3px solid #a855f7}
+.note-date{font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);margin-bottom:.375rem;display:flex;align-items:center;justify-content:space-between}
+.note-date-link{font-size:10px;color:var(--teal);cursor:pointer;font-weight:500;text-decoration:none}
+.note-date-link:hover{text-decoration:underline}
+.note-text{font-size:13px;color:var(--text);line-height:1.65}
+.note-metrics{display:flex;gap:8px;flex-wrap:wrap;margin-top:.5rem}
+.note-metric-chip{font-size:10px;font-weight:500;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-family:var(--mono)}
+.note-metric-chip.highlight{color:var(--teal-dark);background:var(--teal-dim);border-color:var(--teal-mid)}
+.note-metric-chip.lowlight{color:var(--red);background:var(--red-dim);border-color:var(--red-mid)}
+.note-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin:2px 2px 0 0;letter-spacing:.02em}
+.tag-win{background:#e1f5ee;color:#085041}
+.tag-stuck{background:#fdf0ef;color:#d93025}
+.tag-objection{background:#fef9ec;color:#c47a0a}
+.tag-idea{background:#eef4fb;color:#1a6fa8}
+.tag-noshow{background:#f4f3f0;color:#6b6b67}
+.tag-followup{background:#f5f0ff;color:#7c3aed}
+.note-empty{text-align:center;padding:2rem;color:var(--text3);font-size:13px}
+.notes-week-header{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin:.875rem 0 .5rem;padding-bottom:4px;border-bottom:1px solid var(--border)}
+
+/* DATE RANGE */
+.range-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+.range-chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:var(--font);transition:all .12s;letter-spacing:.02em}
+.range-chip:hover{border-color:var(--border2);color:var(--text)}
+.range-chip.active{background:var(--teal-dim);border-color:var(--teal-mid);color:var(--teal-dark)}
+.range-custom{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.range-custom select{padding:5px 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:var(--font);font-size:11px;outline:none;cursor:pointer}
+.range-custom select:focus{border-color:var(--teal)}
+.range-label{font-size:11px;color:var(--text3);font-weight:500}
+.range-summary{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="logo"><span class="logo-s">SS</span></div>
+    <div>
+      <div class="app-title">Synthesizer Scaling OS</div>
+      <div class="app-sub">Business Tracker + Diagnosis</div>
+    </div>
+  </div>
+  <div class="hdr-date" id="hdr-date"></div>
+</div>
+
+<div class="top-tabs">
+  <button class="ttab active" onclick="switchTab('daily',this)">Daily</button>
+  <button class="ttab" onclick="switchTab('sales',this)">Sales</button>
+  <button class="ttab" onclick="switchTab('overview',this)">Overview</button>
+  <button class="ttab" onclick="switchTab('diag',this)">Diagnosis</button>
+  <button class="ttab" onclick="switchTab('notes',this)">Journal</button>
+</div>
+
+<!-- DAILY TAB -->
+<div id="tab-daily">
+  <div id="alert-area"></div>
+  <div class="month-tabs" id="month-tabs"></div>
+  <div class="card">
+    <div class="cal-dows" id="cal-dows"></div>
+    <div class="day-grid" id="day-grid"></div>
+    <div id="day-form"></div>
+    <div class="divider"></div>
+    <div class="lbl">Month Summary</div>
+    <div class="metrics-row" id="month-metrics"></div>
+    <div id="month-insight"></div>
+    <div class="divider"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.625rem">
+      <div class="lbl" style="margin-bottom:0">Year at a glance</div>
+      <span style="font-size:10px;color:var(--text3)">2026</span>
+    </div>
+    <div id="year-strip"></div>
+  </div>
+</div>
+
+<!-- SALES TAB -->
+<div id="tab-sales" style="display:none">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem">
+      <div class="lbl" style="margin-bottom:0">All Calls & Outcomes</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-primary" onclick="saveSales()">Save</button>
+        <span id="sales-saved" class="saved-ok">Saved ✓</span>
+      </div>
+    </div>
+    <div class="metrics-row" id="sales-metrics"></div>
+    <div id="sales-alerts"></div>
+    <div class="fchips" id="fchips"></div>
+    <div style="overflow-x:auto">
+      <table class="st">
+        <thead><tr>
+          <th style="width:72px">Date</th>
+          <th style="width:130px">Name</th>
+          <th style="width:120px">Outcome</th>
+          <th style="width:65px">Cash</th>
+          <th style="width:65px">Revenue</th>
+          <th>Notes</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="sales-body"></tbody>
+      </table>
+    </div>
+    <button class="add-btn" onclick="addSalesRow()">+ Add call</button>
+
+    <!-- TRASH -->
+    <div class="trash-section">
+      <div class="trash-header" onclick="toggleTrash()">
+        <div class="trash-toggle">
+          <span id="trash-arrow">▶</span>
+          Deleted entries
+          <span class="trash-count" id="trash-count">0</span>
+        </div>
+      </div>
+      <div id="trash-body" style="display:none">
+        <table class="st" style="margin-top:.5rem">
+          <thead><tr>
+            <th>Date</th><th>Name</th><th>Outcome</th><th>Cash</th><th>Revenue</th><th>Notes</th><th></th>
+          </tr></thead>
+          <tbody id="trash-rows"></tbody>
+        </table>
+        <div style="margin-top:.75rem">
+          <button class="btn-danger" onclick="clearTrash()" style="font-size:11px">Clear trash permanently</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="export-row">
+      <span style="font-size:11px;color:var(--text3)">Export your data</span>
+      <button class="btn-ghost" onclick="exportCSV('sales')" style="font-size:11px">Download Sales CSV</button>
+      <button class="btn-ghost" onclick="exportCSV('daily')" style="font-size:11px">Download Daily CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERVIEW TAB -->
+<div id="tab-overview" style="display:none">
+  <div class="card">
+    <!-- DATE RANGE SELECTOR -->
+    <div class="lbl">Date Range</div>
+    <div class="range-bar" id="range-chips">
+      <button class="range-chip active" onclick="setRange('ytd',this)">Year to date</button>
+      <button class="range-chip" onclick="setRange('q1',this)">Q1 Jan–Mar</button>
+      <button class="range-chip" onclick="setRange('q2',this)">Q2 Apr–Jun</button>
+      <button class="range-chip" onclick="setRange('q3',this)">Q3 Jul–Sep</button>
+      <button class="range-chip" onclick="setRange('q4',this)">Q4 Oct–Dec</button>
+      <button class="range-chip" onclick="setRange('all',this)">Full year</button>
+      <button class="range-chip" onclick="setRange('custom',this)">Custom</button>
+    </div>
+    <div id="custom-range" style="display:none" class="range-custom">
+      <span class="range-label">From</span>
+      <select id="range-from" onchange="renderOverview()">
+        <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+        <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+        <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+        <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+      </select>
+      <span class="range-label">To</span>
+      <select id="range-to" onchange="renderOverview()">
+        <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+        <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+        <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+        <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+      </select>
+    </div>
+    <div class="divider"></div>
+    <div class="lbl" id="ov-range-label">Performance</div>
+    <div class="ov-grid" id="ov-totals"></div>
+    <div class="divider"></div>
+    <div class="lbl">Revenue by Month</div>
+    <div class="cw"><canvas id="c-rev"></canvas></div>
+    <div class="lbl" style="margin-top:1.25rem">Outreach vs Calls Taken</div>
+    <div class="cw"><canvas id="c-out"></canvas></div>
+    <div class="lbl" style="margin-top:1.25rem">Close Rate %</div>
+    <div class="cw"><canvas id="c-cr"></canvas></div>
+  </div>
+</div>
+
+<!-- DIAGNOSIS TAB -->
+<div id="tab-diag" style="display:none">
+  <div id="diag-content"></div>
+</div>
+
+<!-- NOTES JOURNAL TAB -->
+<div id="tab-notes" style="display:none">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem">
+      <div class="lbl" style="margin-bottom:0">Notes Journal</div>
+      <span id="notes-count" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
+    </div>
+
+    <!-- SEARCH -->
+    <div style="position:relative;margin-bottom:.875rem">
+      <input type="text" id="notes-search" placeholder="Search notes..." oninput="renderNotes()"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px 8px 32px;font-size:13px;color:var(--text);font-family:var(--font);outline:none">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text3)">⌕</span>
+    </div>
+
+    <!-- TAG FILTERS -->
+    <div class="fchips" id="notes-tag-chips"></div>
+
+    <!-- NOTES FEED -->
+    <div id="notes-feed"></div>
+
+    <!-- TAG GUIDE -->
+    <div style="margin-top:1.25rem;padding-top:.875rem;border-top:1px solid var(--border)">
+      <div class="lbl">How to use tags in notes</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:.5rem">
+        <span class="note-tag tag-win">#win</span>
+        <span class="note-tag tag-stuck">#stuck</span>
+        <span class="note-tag tag-objection">#objection</span>
+        <span class="note-tag tag-idea">#idea</span>
+        <span class="note-tag tag-noshow">#noshow</span>
+        <span class="note-tag tag-follow">#followup</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:.625rem;line-height:1.6">
+        Type any tag anywhere in your daily note. Example: <em style="color:var(--text2)">"Sent 40 DMs, got 2 responses. #win — piano hook working well. Call with Ana — lost at price. #objection"</em>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .app -->
+
+<script>
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+const OUTCOMES=['','Customer','No deal','No offer made','BAMFAM','No show','REFUND'];
+const STAGE_NAMES=['Backbone','Rapid Launch','Attract','Convert','Deliver'];
+
+const today=new Date();
+document.getElementById('hdr-date').textContent=today.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+// ── DEFAULT DATA ──────────────────────────────────────────────
+const DEFAULT_SALES=[
+  {date:'Jan 16',name:'Ana Karaic',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Jan 16',name:'Liljana Šestić',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Jan 22',name:'Dragana Pavlovic',outcome:'Customer',cash:'600',revenue:'1800',notes:'$600 reservation fee for April cohort'},
+  {date:'Jan 23',name:'Jana Radojković',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Jan 29',name:'Tijana Pavićević',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Jan 29',name:'Jelena Damjanović',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Jan 29',name:'Mia Popić',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Jan 30',name:'Marijana Carlsten',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Feb 5',name:'Darinka Marcikic',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Feb 5',name:'Lidia Turo',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Feb 5',name:'Ivana Zagorčić',outcome:'Customer',cash:'600',revenue:'1800',notes:'$600 reservation fee for April cohort'},
+  {date:'Feb 6',name:'Tijana Marić',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Feb 13',name:'Olivera Grbić',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Feb 19',name:'Sashka Denkovska',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Feb 20',name:'Tatjana Šuletić',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Feb 26',name:'Mirela Alomerovic',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Feb 27',name:'Irena Gligorov',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Feb 27',name:'Sladjana Dumanovic',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Mar 5',name:'Tatjana Djukić',outcome:'No deal',cash:'',revenue:'',notes:'In Follow Up (80%) - Urgency email'},
+  {date:'Mar 6',name:'Ksenija Markovic',outcome:'No deal',cash:'',revenue:'',notes:'In Follow Up (30%) - Urgency email'},
+  {date:'Mar 12',name:'Miljana Pajdić',outcome:'No deal',cash:'',revenue:'',notes:'Called back - wants to pay - wait end of March'},
+  {date:'Mar 12',name:'Julija Drobnjak',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Mar 19',name:'Nataša Totošković',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Mar 19',name:'Ivana Avramov',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Mar 20',name:'Kostadin Martic',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Mar 20',name:'Aleksandra Rogić',outcome:'No deal',cash:'',revenue:'',notes:''},
+  {date:'Mar 20',name:'Dragana Petrovic',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Mar 26',name:'Jelena Kvaščev',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Mar 26',name:'Natasa B',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+  {date:'Mar 26',name:'Tamara Jovovic',outcome:'Customer',cash:'1620',revenue:'1620',notes:'Paid in full with 10% discount'},
+];
+
+const DEFAULT_DAILY={
+  January:{totals:{social:600234,yt:54700,outreach:0,posts:10,members:252,booked:8,taken:8,customers:2,revenue:3420,cash:2220}},
+  February:{totals:{social:682930,yt:21762,outreach:39968,posts:21,members:597,booked:10,taken:10,customers:5,revenue:8280,cash:7080}},
+  March:{totals:{social:43370,yt:154,outreach:7371,posts:7,members:490,booked:12,taken:12,customers:7,revenue:11340,cash:11340}},
+};
+
+// ── STATE ─────────────────────────────────────────────────────
+let dailyData={},salesData=[],trashData=[],currentMonth=today.getMonth(),currentDay=today.getDate(),charts={},salesFilter='',trashOpen=false;
+let activeRange='ytd';
+
+// ── RANGE HELPERS ─────────────────────────────────────────────
+const QUARTERS={q1:[0,2],q2:[3,5],q3:[6,8],q4:[9,11]};
+
+function getRangeMonths(){
+  const curM=today.getMonth();
+  if(activeRange==='ytd') return MONTHS.slice(0,curM+1);
+  if(activeRange==='all') return MONTHS.slice();
+  if(activeRange==='q1') return MONTHS.slice(0,3);
+  if(activeRange==='q2') return MONTHS.slice(3,6);
+  if(activeRange==='q3') return MONTHS.slice(6,9);
+  if(activeRange==='q4') return MONTHS.slice(9,12);
+  if(activeRange==='custom'){
+    const f=parseInt(document.getElementById('range-from')?.value||0);
+    const t=parseInt(document.getElementById('range-to')?.value||11);
+    const lo=Math.min(f,t),hi=Math.max(f,t);
+    return MONTHS.slice(lo,hi+1);
+  }
+  return MONTHS.slice();
+}
+
+function setRange(r,btn){
+  activeRange=r;
+  document.querySelectorAll('.range-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  const customEl=document.getElementById('custom-range');
+  if(customEl) customEl.style.display=r==='custom'?'flex':'none';
+  if(r==='custom'){
+    const from=document.getElementById('range-from');
+    const to=document.getElementById('range-to');
+    if(from) from.value=0;
+    if(to) to.value=today.getMonth();
+  }
+  renderOverview();
+}
+
+// ── STORAGE ───────────────────────────────────────────────────
+function save(){
+  localStorage.setItem('ss-daily-v5',JSON.stringify(dailyData));
+  localStorage.setItem('ss-sales-v5',JSON.stringify(salesData));
+  localStorage.setItem('ss-trash-v5',JSON.stringify(trashData));
+}
+
+function loadAll(){
+  const d=localStorage.getItem('ss-daily-v5');
+  const s=localStorage.getItem('ss-sales-v5');
+  const t=localStorage.getItem('ss-trash-v5');
+  dailyData=d?JSON.parse(d):JSON.parse(JSON.stringify(DEFAULT_DAILY));
+  salesData=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_SALES));
+  trashData=t?JSON.parse(t):[];
+  renderAll();
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────
+function renderAll(){renderMonthTabs();renderCalendar();renderDayForm();renderMonthSummary();renderAlerts();}
+
+// ── MONTH TABS ────────────────────────────────────────────────
+function renderMonthTabs(){
+  document.getElementById('month-tabs').innerHTML=MONTHS.map((m,i)=>{
+    const has=dailyData[m]&&(dailyData[m].totals||Object.keys(dailyData[m]).filter(k=>k!=='totals').length>0);
+    return`<button class="mtab ${i===currentMonth?'active':''} ${has?'has-data':''}" onclick="selectMonth(${i})">${m.slice(0,3)}</button>`;
+  }).join('');
+}
+function selectMonth(i){currentMonth=i;currentDay=1;renderAll();}
+
+// ── CALENDAR ──────────────────────────────────────────────────
+function renderCalendar(){
+  const m=MONTHS[currentMonth];const days=DAYS[currentMonth];
+  const firstDow=new Date(2026,currentMonth,1).getDay();
+  const mData=dailyData[m]||{};
+  document.getElementById('cal-dows').innerHTML=['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  let html='';
+  for(let i=0;i<firstDow;i++)html+=`<div class="dc empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const dd=mData[d]||{};
+    const has=Object.values(dd).some(v=>v>0||v);
+    const isToday=currentMonth===today.getMonth()&&d===today.getDate();
+    const isActive=d===currentDay;
+    html+=`<div class="dc ${isActive?'active':''} ${has?'has-data':''} ${isToday&&!isActive?'today-c':''}" onclick="selectDay(${d})">
+      <span>${d}</span>${has?'<div class="ddot"></div>':''}
+    </div>`;
+  }
+  document.getElementById('day-grid').innerHTML=html;
+}
+function selectDay(d){currentDay=d;renderCalendar();renderDayForm();}
+
+// ── DAY FORM ──────────────────────────────────────────────────
+function renderDayForm(){
+  const m=MONTHS[currentMonth];const d=currentDay;
+  const dd=(dailyData[m]&&dailyData[m][d])||{};
+  const b=dd.booked||0,tk=dd.taken||0,cu=dd.customers||0;
+  const sr=b>0?Math.round((tk/b)*100):null;
+  const cr=tk>0?Math.round((cu/tk)*100):null;
+  document.getElementById('day-form').innerHTML=`
+    <div class="day-form">
+      <div class="day-title">
+        <span>${MONTHS[currentMonth]} ${d}, 2026</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn-clear" onclick="clearDayEntry()">Clear</button>
+          <button class="btn-primary" onclick="saveDayEntry()">Save day</button>
+          <span id="day-saved" class="saved-ok">Saved ✓</span>
+        </div>
+      </div>
+      <div class="fg">
+        <div class="sec-div">Attract</div>
+        <div class="fr">
+          <div class="ff"><label>Outreach (DMs)</label><input type="number" id="d-out" value="${dd.outreach||''}" placeholder="0" oninput="liveCalc()"></div>
+          <div class="ff"><label>Skool posts</label><input type="number" id="d-pos" value="${dd.posts||''}" placeholder="0"></div>
+          <div class="ff"><label>New members</label><input type="number" id="d-mem" value="${dd.members||''}" placeholder="0"></div>
+          <div class="ff"><label>YouTube views</label><input type="number" id="d-yt" value="${dd.yt||''}" placeholder="0"></div>
+          <div class="ff ff-full"><label>Social views (IG/FB/TikTok)</label><input type="number" id="d-soc" value="${dd.social||''}" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="fg">
+        <div class="sec-div">Convert</div>
+        <div class="fr">
+          <div class="ff"><label>Calls booked</label><input type="number" id="d-bk" value="${dd.booked||''}" placeholder="0" oninput="liveCalc()"></div>
+          <div class="ff"><label>Calls taken</label><input type="number" id="d-tk" value="${dd.taken||''}" placeholder="0" oninput="liveCalc()"></div>
+          <div class="ff"><label>New customers</label><input type="number" id="d-cu" value="${dd.customers||''}" placeholder="0" oninput="liveCalc()"></div>
+          <div class="ff"><label>Revenue ($)</label><input type="number" id="d-rev" value="${dd.revenue||''}" placeholder="0"></div>
+          <div class="ff"><label>Cash collected ($)</label><input type="number" id="d-cash" value="${dd.cash||''}" placeholder="0"></div>
+        </div>
+        <div class="fr" style="margin-top:8px">
+          <div class="ff"><label>Show-up rate</label><div class="calc-chip ${sr===null?'':sr>=70?'good':'bad'}" id="chip-sr">${sr===null?'—':sr+'%'}</div></div>
+          <div class="ff"><label>Close rate</label><div class="calc-chip ${cr===null?'':cr>=20?'good':'bad'}" id="chip-cr">${cr===null?'—':cr+'%'}</div></div>
+        </div>
+      </div>
+      <div class="fr"><div class="ff ff-full"><label>Notes</label><input type="text" id="d-notes" value="${dd.notes||''}" placeholder="What worked, what to improve..."></div></div>
+    </div>`;
+}
+
+function clearDayEntry(){
+  const fields=['d-out','d-pos','d-mem','d-yt','d-soc','d-bk','d-tk','d-cu','d-rev','d-cash','d-notes'];
+  fields.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const m=MONTHS[currentMonth];
+  if(dailyData[m]&&dailyData[m][currentDay]) delete dailyData[m][currentDay];
+  save();renderCalendar();renderMonthSummary();
+  const se=document.getElementById('chip-sr'),ce=document.getElementById('chip-cr');
+  if(se){se.textContent='—';se.className='calc-chip';}
+  if(ce){ce.textContent='—';ce.className='calc-chip';}
+}
+
+function liveCalc(){
+  const b=parseFloat(document.getElementById('d-bk')?.value)||0;
+  const tk=parseFloat(document.getElementById('d-tk')?.value)||0;
+  const cu=parseFloat(document.getElementById('d-cu')?.value)||0;
+  const sr=b>0?Math.round((tk/b)*100):null;
+  const cr=tk>0?Math.round((cu/tk)*100):null;
+  const se=document.getElementById('chip-sr'),ce=document.getElementById('chip-cr');
+  if(se){se.textContent=sr===null?'—':sr+'%';se.className='calc-chip '+(sr===null?'':sr>=70?'good':'bad');}
+  if(ce){ce.textContent=cr===null?'—':cr+'%';ce.className='calc-chip '+(cr===null?'':cr>=20?'good':'bad');}
+}
+
+function saveDayEntry(){
+  const m=MONTHS[currentMonth];
+  if(!dailyData[m])dailyData[m]={};
+  dailyData[m][currentDay]={
+    outreach:parseFloat(document.getElementById('d-out').value)||0,
+    posts:parseFloat(document.getElementById('d-pos').value)||0,
+    members:parseFloat(document.getElementById('d-mem').value)||0,
+    yt:parseFloat(document.getElementById('d-yt').value)||0,
+    social:parseFloat(document.getElementById('d-soc').value)||0,
+    booked:parseFloat(document.getElementById('d-bk').value)||0,
+    taken:parseFloat(document.getElementById('d-tk').value)||0,
+    customers:parseFloat(document.getElementById('d-cu').value)||0,
+    revenue:parseFloat(document.getElementById('d-rev').value)||0,
+    cash:parseFloat(document.getElementById('d-cash').value)||0,
+    notes:document.getElementById('d-notes').value||''
+  };
+  save();renderCalendar();renderMonthSummary();renderAlerts();
+  const msg=document.getElementById('day-saved');
+  if(msg){msg.style.opacity='1';setTimeout(()=>msg.style.opacity='0',1500);}
+}
+
+// ── MONTH TOTALS ──────────────────────────────────────────────
+function getMonthTotals(m){
+  const mD=dailyData[m]||{};
+  const t={outreach:0,posts:0,members:0,yt:0,social:0,booked:0,taken:0,customers:0,revenue:0,cash:0};
+  if(mD.totals&&Object.keys(mD).length===1){Object.keys(t).forEach(k=>t[k]=mD.totals[k]||0);return t;}
+  Object.entries(mD).forEach(([k,d])=>{
+    if(k==='totals')return;
+    Object.keys(t).forEach(key=>t[key]+=(d[key]||0));
+  });
+  if(mD.totals){Object.keys(t).forEach(k=>{if(t[k]===0&&mD.totals[k])t[k]=mD.totals[k];});}
+  return t;
+}
+
+// ── MONTH SUMMARY ─────────────────────────────────────────────
+function renderMonthSummary(){
+  const m=MONTHS[currentMonth];const t=getMonthTotals(m);
+  const cr=t.taken>0?Math.round((t.customers/t.taken)*100):0;
+  const sr=t.booked>0?Math.round((t.taken/t.booked)*100):0;
+  document.getElementById('month-metrics').innerHTML=`
+    <div class="mc ${t.revenue>0?'good':''}"><div class="mv">$${t.revenue.toLocaleString()}</div><div class="ml">Revenue</div></div>
+    <div class="mc ${t.customers>0?'good':''}"><div class="mv">${t.customers}</div><div class="ml">Clients</div></div>
+    <div class="mc ${t.booked>=30?'good':t.booked>0?'warn':'bad'}"><div class="mv">${t.booked}</div><div class="ml">Calls booked</div></div>
+    <div class="mc ${cr>=20?'good':t.taken>0?'bad':''}"><div class="mv">${cr>0?cr+'%':'—'}</div><div class="ml">Close rate</div></div>
+    <div class="mc ${t.taken>0?'good':''}"><div class="mv">${t.taken}</div><div class="ml">Calls taken</div></div>
+    <div class="mc ${sr>=70?'good':t.booked>0?'warn':''}"><div class="mv">${sr>0?sr+'%':'—'}</div><div class="ml">Show-up rate</div></div>
+    <div class="mc"><div class="mv">${t.outreach.toLocaleString()}</div><div class="ml">Outreach</div></div>
+    <div class="mc"><div class="mv">${t.members}</div><div class="ml">New members</div></div>`;
+  let ins='',cls='';
+  if(t.taken===0){ins='<strong>Constraint: Attract.</strong> No calls taken. Focus on outreach — target 2+ calls booked per day.';cls='bad';}
+  else if(cr<20&&t.taken>0){ins=`<strong>Constraint: Convert.</strong> Close rate ${cr}% is below 20%. Rewatch sales training, do roleplays.`;cls='bad';}
+  else if(sr<70&&t.booked>0){ins=`<strong>Watch show-up rate: ${sr}%.</strong> Send reminders 24h and 1h before each call.`;cls='warn';}
+  else if(t.booked<30){ins=`<strong>Volume is low.</strong> Close rate ${cr}% is solid. Need more calls — increase daily outreach.`;cls='warn';}
+  else{ins=`<strong>On track.</strong> Close rate ${cr}%, show-up ${sr}%. More → Better. Keep going.`;cls='';}
+  document.getElementById('month-insight').innerHTML=`<div class="ins ${cls}">${ins}</div>`;
+  renderYearStrip();
+}
+
+// ── YEAR STRIP ────────────────────────────────────────────────
+function renderYearStrip(){
+  const el=document.getElementById('year-strip');
+  if(!el)return;
+  const curM=today.getMonth();
+  const allRevs=MONTHS.map(m=>getMonthTotals(m).revenue||0);
+  const maxRev=Math.max(...allRevs,1);
+  const yearTotals={revenue:0,customers:0,taken:0};
+  MONTHS.slice(0,curM+1).forEach(m=>{
+    const t=getMonthTotals(m);
+    yearTotals.revenue+=t.revenue||0;
+    yearTotals.customers+=t.customers||0;
+    yearTotals.taken+=t.taken||0;
+  });
+  const yearCR=yearTotals.taken>0?Math.round((yearTotals.customers/yearTotals.taken)*100):0;
+
+  let html=`<div class="year-strip">`;
+  MONTHS.forEach((m,i)=>{
+    const t=getMonthTotals(m);
+    const isFuture=i>curM;
+    const isActive=i===currentMonth;
+    const rev=t.revenue||0;
+    const cr=t.taken>0?Math.round((t.customers/t.taken)*100):null;
+    const barPct=maxRev>0?Math.round((rev/maxRev)*100):0;
+    const cellCls=isActive?'ys-active':isFuture?'ys-future':cr!==null&&cr<20?'ys-warn':'';
+    const revLabel=rev>=1000?'$'+(rev/1000).toFixed(1)+'k':rev>0?'$'+rev:'—';
+    const subLabel=cr!==null?cr+'% close':isFuture?'upcoming':'no data';
+    html+=`
+      <div class="ys-cell ${cellCls}" onclick="selectMonth(${i})">
+        <div class="ys-month">${m.slice(0,3)}</div>
+        <div class="ys-rev">${revLabel}</div>
+        <div class="ys-sub">${subLabel}</div>
+        <div class="ys-bar-wrap"><div class="ys-bar" style="width:${barPct}%"></div></div>
+      </div>`;
+  });
+  html+='</div>';
+
+  html+=`<div class="year-totals-row">
+    <div class="yt-chip good"><div><div class="ytv">$${yearTotals.revenue.toLocaleString()}</div><div class="ytl">YTD revenue</div></div></div>
+    <div class="yt-chip good"><div><div class="ytv">${yearTotals.customers}</div><div class="ytl">YTD clients</div></div></div>
+    <div class="yt-chip ${yearCR>=20?'good':''}"><div><div class="ytv">${yearCR}%</div><div class="ytl">YTD close rate</div></div></div>
+  </div>`;
+
+  el.innerHTML=html;
+}
+function renderAlerts(){
+  const pending=salesData.filter(r=>r.outcome===''&&r.name);
+  document.getElementById('alert-area').innerHTML=pending.length>0
+    ?`<div class="alert-bar"><div class="adot"></div><strong>${pending.length} open call${pending.length>1?'s':''}</strong> without outcome — open Sales tab and close them out.</div>`:'';
+}
+
+// ── SALES ─────────────────────────────────────────────────────
+function getLiveSalesStats(){
+  const customers=salesData.filter(r=>r.outcome==='Customer');
+  const decided=salesData.filter(r=>['Customer','No deal','No offer made','No show'].includes(r.outcome));
+  const cr=decided.length>0?Math.round((customers.length/decided.length)*100):0;
+  const totalCash=customers.reduce((s,r)=>s+(parseFloat(r.cash)||0),0);
+  const totalRev=customers.reduce((s,r)=>s+(parseFloat(r.revenue)||0),0);
+  const pending=salesData.filter(r=>r.outcome===''&&r.name);
+  const mt=getMonthTotals(MONTHS[today.getMonth()]);
+  const dailyBooked=mt.booked/Math.max(today.getDate(),1);
+  return{customers:customers.length,cr,totalCash,totalRev,pending:pending.length,dailyBooked,allTaken:decided.length};
+}
+
+function renderSales(){
+  const filtered=salesFilter?salesData.filter(r=>r.outcome===salesFilter):salesData;
+  const stats=getLiveSalesStats();
+  document.getElementById('sales-metrics').innerHTML=`
+    <div class="mc good"><div class="mv">${stats.customers}</div><div class="ml">Customers</div></div>
+    <div class="mc good"><div class="mv">$${stats.totalCash.toLocaleString()}</div><div class="ml">Cash</div></div>
+    <div class="mc good"><div class="mv">$${stats.totalRev.toLocaleString()}</div><div class="ml">Revenue</div></div>
+    <div class="mc ${stats.cr>=20?'good':'bad'}"><div class="mv">${stats.cr}%</div><div class="ml">Close rate</div></div>`;
+  document.getElementById('sales-alerts').innerHTML=stats.pending>0
+    ?`<div class="alert-bar" style="margin-bottom:.75rem"><div class="adot"></div><strong>${stats.pending} open</strong> calls without outcome — update them.</div>`:'';
+  const chips=['','Customer','No deal','BAMFAM','No show','No offer made','REFUND'];
+  document.getElementById('fchips').innerHTML=chips.map(c=>`<button class="fchip ${salesFilter===c?'active':''}" onclick="setSF('${c}')">${c||'All'}</button>`).join('');
+  document.getElementById('sales-body').innerHTML=filtered.map(r=>{
+    const ri=salesData.indexOf(r);
+    const isAlert=r.outcome===''&&r.name;
+    const isFollow=r.notes&&r.notes.toLowerCase().includes('follow');
+    const isWait=r.notes&&r.notes.toLowerCase().includes('wait');
+    const nc=isWait||isFollow?'var(--amber)':isAlert?'var(--red)':'var(--text2)';
+    return`<tr class="${isAlert?'rowalert':''}">
+      <td><input value="${r.date||''}" oninput="salesData[${ri}].date=this.value" placeholder="Mar 20" style="width:60px"></td>
+      <td><input value="${r.name||''}" oninput="salesData[${ri}].name=this.value" placeholder="Name" style="width:110px"></td>
+      <td><select onchange="salesData[${ri}].outcome=this.value;renderSales()" style="font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:var(--font);cursor:pointer">
+        ${OUTCOMES.map(o=>`<option value="${o}" ${r.outcome===o?'selected':''}>${o||'— select —'}</option>`).join('')}
+      </select></td>
+      <td><input value="${r.cash?'$'+r.cash:''}" oninput="salesData[${ri}].cash=this.value.replace('$','')" placeholder="$0" style="width:52px"></td>
+      <td><input value="${r.revenue?'$'+r.revenue:''}" oninput="salesData[${ri}].revenue=this.value.replace('$','')" placeholder="$0" style="width:52px"></td>
+      <td style="color:${nc}"><input value="${r.notes||''}" oninput="salesData[${ri}].notes=this.value" placeholder="Notes..." style="color:inherit;min-width:100px"></td>
+      <td><button class="del-btn" onclick="softDelete(${ri})" title="Move to trash">🗑</button></td>
+    </tr>`;
+  }).join('');
+  renderTrash();
+}
+
+function setSF(f){salesFilter=f;renderSales();}
+
+function addSalesRow(){
+  const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  salesData.push({date:`${mo[today.getMonth()]} ${today.getDate()}`,name:'',outcome:'',cash:'',revenue:'',notes:''});
+  renderSales();
+  setTimeout(()=>{const rows=document.querySelectorAll('#sales-body tr');if(rows.length)rows[rows.length-1].querySelectorAll('input')[1].focus();},60);
+}
+
+function saveSales(){
+  save();
+  const msg=document.getElementById('sales-saved');
+  if(msg){msg.style.opacity='1';setTimeout(()=>msg.style.opacity='0',1500);}
+}
+
+// ── SOFT DELETE / TRASH ───────────────────────────────────────
+function softDelete(idx){
+  const row=salesData.splice(idx,1)[0];
+  row._deletedAt=new Date().toLocaleDateString('en-GB');
+  trashData.push(row);
+  save();renderSales();renderAlerts();
+}
+
+function restoreFromTrash(idx){
+  const row=trashData.splice(idx,1)[0];
+  delete row._deletedAt;
+  salesData.push(row);
+  save();renderSales();renderAlerts();
+}
+
+function clearTrash(){
+  if(confirm('Permanently delete all items in trash? This cannot be undone.'))  {
+    trashData=[];save();renderTrash();
+  }
+}
+
+function toggleTrash(){
+  trashOpen=!trashOpen;
+  document.getElementById('trash-body').style.display=trashOpen?'block':'none';
+  document.getElementById('trash-arrow').textContent=trashOpen?'▼':'▶';
+}
+
+function renderTrash(){
+  document.getElementById('trash-count').textContent=trashData.length;
+  document.getElementById('trash-rows').innerHTML=trashData.map((r,i)=>`
+    <tr class="trashed">
+      <td>${r.date||''}</td>
+      <td>${r.name||''}</td>
+      <td>${r.outcome||'—'}</td>
+      <td>${r.cash?'$'+r.cash:''}</td>
+      <td>${r.revenue?'$'+r.revenue:''}</td>
+      <td style="font-size:11px">${r.notes||''}</td>
+      <td><button class="restore-btn" onclick="restoreFromTrash(${i})">Restore</button></td>
+    </tr>`).join('');
+}
+
+// ── CSV EXPORT ────────────────────────────────────────────────
+function exportCSV(type){
+  let csv='',filename='';
+  if(type==='sales'){
+    csv='Date,Name,Outcome,Cash,Revenue,Notes\n';
+    salesData.forEach(r=>{
+      csv+=`"${r.date||''}","${r.name||''}","${r.outcome||''}","${r.cash||''}","${r.revenue||''}","${(r.notes||'').replace(/"/g,"'")}"\n`;
+    });
+    filename='synthesizer_sales_'+new Date().toISOString().slice(0,10)+'.csv';
+  } else {
+    csv='Month,Day,Outreach,Posts,Members,YT Views,Social Views,Calls Booked,Calls Taken,Customers,Revenue,Cash,Notes\n';
+    MONTHS.forEach(m=>{
+      const mD=dailyData[m]||{};
+      if(mD.totals&&Object.keys(mD).length===1){
+        const t=mD.totals;
+        csv+=`"${m}","(monthly total)","${t.outreach||0}","${t.posts||0}","${t.members||0}","${t.yt||0}","${t.social||0}","${t.booked||0}","${t.taken||0}","${t.customers||0}","${t.revenue||0}","${t.cash||0}",""\n`;
+      } else {
+        Object.entries(mD).forEach(([k,d])=>{
+          if(k==='totals')return;
+          csv+=`"${m}","${k}","${d.outreach||0}","${d.posts||0}","${d.members||0}","${d.yt||0}","${d.social||0}","${d.booked||0}","${d.taken||0}","${d.customers||0}","${d.revenue||0}","${d.cash||0}","${(d.notes||'').replace(/"/g,"'")}"\n`;
+        });
+      }
+    });
+    filename='synthesizer_daily_'+new Date().toISOString().slice(0,10)+'.csv';
+  }
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────
+function renderOverview(){
+  const rangeMonths=getRangeMonths();
+  const totals={revenue:0,cash:0,customers:0,outreach:0,taken:0,booked:0,members:0};
+  rangeMonths.forEach(m=>{const t=getMonthTotals(m);Object.keys(totals).forEach(k=>totals[k]+=t[k]||0);});
+  const cr=totals.taken>0?Math.round((totals.customers/totals.taken)*100):0;
+
+  // Range label
+  const rangeLabels={ytd:'Year to date',all:'Full year 2026',q1:'Q1 — Jan to Mar',q2:'Q2 — Apr to Jun',q3:'Q3 — Jul to Sep',q4:'Q4 — Oct to Dec',custom:'Custom range'};
+  const lbl=document.getElementById('ov-range-label');
+  if(lbl) lbl.textContent=rangeLabels[activeRange]||'Performance';
+
+  document.getElementById('ov-totals').innerHTML=`
+    <div class="kpi good"><div class="kv">$${totals.revenue.toLocaleString()}</div><div class="kl">Revenue</div></div>
+    <div class="kpi good"><div class="kv">$${totals.cash.toLocaleString()}</div><div class="kl">Cash collected</div></div>
+    <div class="kpi good"><div class="kv">${totals.customers}</div><div class="kl">Clients</div></div>
+    <div class="kpi ${cr>=20?'good':'bad'}"><div class="kv">${cr}%</div><div class="kl">Close rate</div></div>
+    <div class="kpi"><div class="kv">${totals.taken}</div><div class="kl">Calls taken</div></div>
+    <div class="kpi"><div class="kv">${totals.outreach.toLocaleString()}</div><div class="kl">Outreach</div></div>`;
+
+  const labels=rangeMonths.map(m=>m.slice(0,3));
+  const revD=rangeMonths.map(m=>getMonthTotals(m).revenue||0);
+  const outD=rangeMonths.map(m=>getMonthTotals(m).outreach||0);
+  const takD=rangeMonths.map(m=>getMonthTotals(m).taken||0);
+  const crD=rangeMonths.map(m=>{const t=getMonthTotals(m);return t.taken>0?Math.round((t.customers/t.taken)*100):0;});
+  const gc='rgba(0,0,0,0.04)',tc='#a8a8a3';
+  if(charts.rev)charts.rev.destroy();
+  if(charts.out)charts.out.destroy();
+  if(charts.cr)charts.cr.destroy();
+  charts.rev=new Chart(document.getElementById('c-rev'),{type:'bar',data:{labels,datasets:[{data:revD,backgroundColor:revD.map(v=>v>0?'#1D9E75':'#eeedea'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,autoSkip:false,font:{size:10}},grid:{color:gc}},y:{ticks:{color:tc,callback:v=>'$'+v.toLocaleString(),font:{size:10}},grid:{color:gc}}}}});
+  charts.out=new Chart(document.getElementById('c-out'),{type:'bar',data:{labels,datasets:[{data:outD,backgroundColor:'rgba(29,158,117,0.15)',borderRadius:4},{data:takD,backgroundColor:'#1D9E75',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,autoSkip:false,font:{size:10}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:10}},grid:{color:gc}}}}});
+  charts.cr=new Chart(document.getElementById('c-cr'),{type:'line',data:{labels,datasets:[{data:crD,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.07)',tension:.35,fill:true,pointBackgroundColor:crD.map(v=>v>0&&v<20?'#d93025':'#1D9E75'),pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,autoSkip:false,font:{size:10}},grid:{color:gc}},y:{min:0,max:100,ticks:{color:tc,callback:v=>v+'%',font:{size:10}},grid:{color:gc}}}}});
+}
+
+// ── DIAGNOSIS ─────────────────────────────────────────────────
+function renderDiagnosis(){
+  const stats=getLiveSalesStats();
+  const mt=getMonthTotals(MONTHS[today.getMonth()]);
+  const cr=stats.cr;
+  const dailyBooked=mt.booked/Math.max(today.getDate(),1);
+  const clients=stats.customers;
+
+  let key='';
+  if(clients===0) key='attract1';
+  else if(dailyBooked<2&&clients<5) key='attract2';
+  else if(cr>0&&cr<20) key='convert_sales';
+  else if(mt.booked>=30&&cr>=40) key='attract3';
+  else if(clients>=10) key='deliver';
+  else key='convert_funnel';
+
+  const DIAG={
+    attract1:{
+      stage:2,funnel:0,badge:'badge-attract',badgeText:'Attract — no clients yet',
+      title:'Constraint: Attract (no clients yet)',
+      sub:'You have no paying clients yet. Don\'t start YouTube. Don\'t build funnels. One job: get your first client through Skool networking and free work.',
+      steps:[
+        {cls:'warm',label:'Skool networking — daily',desc:'Join groups → comment → start chats → book calls. Every day.'},
+        {cls:'warm',label:'Exhaust network + opportunity audit',desc:'Follow up with every single lead. 3x minimum.'},
+        {cls:'mid',label:'Work for free if needed',desc:'Get proof and case studies. Then pitch for money.'},
+      ],
+      actions:[
+        {t:'Watch and take action on <strong>Skool Networking training</strong> immediately'},
+        {t:'<strong>Exhaust your opportunity audit</strong> — follow up with every lead, book calls, present your offer'},
+        {t:'<strong>Work for free</strong> if needed — collect proof, then use it to close paying clients'},
+        {t:'Do <strong>NOT</strong> start YouTube yet — get a client first'},
+      ],
+      rule:'Do not do YouTube. Do not build funnels. Do Skool networking until you have your first client.'
+    },
+    attract2:{
+      stage:2,funnel:0,badge:'badge-attract',badgeText:'Attract — need more calls',
+      title:'Constraint: Attract (not enough calls)',
+      sub:`You have ${clients} client${clients!==1?'s':''} but averaging ${dailyBooked.toFixed(1)} calls/day — below the 2/day target. Don't add new channels. Do more and better of what's working.`,
+      steps:[
+        {cls:'warm',label:'More → better of what works',desc:'Double down on your current channel before adding anything new.'},
+        {cls:'warm',label:'CTAs to calendar + free Skool',desc:'Every piece of content needs a direct call to action.'},
+        {cls:'mid',label:'Consider an appointment setter',desc:'5% commission on cash collected. Look in your DMs for hungry candidates.'},
+      ],
+      actions:[
+        {t:'Do <strong>more → better</strong> of what you\'re currently doing — not something new'},
+        {t:'Add <strong>CTAs to your calendar and free Skool</strong> in every post and video'},
+        {t:'If time is the issue, bring in an <strong>appointment setter</strong> (5–10% commission)'},
+        {t:'Come to <strong>implementation calls</strong> and make posts for help'},
+      ],
+      rule:'If something is working slowly — double down before trying anything new. More → Better → New is the order.'
+    },
+    attract3:{
+      stage:2,funnel:0,badge:'badge-attract',badgeText:'Attract — YouTube ready',
+      title:'Constraint: Attract (ready for YouTube)',
+      sub:'You\'ve exhausted your warm network. Time to install YouTube as your long-term attraction engine.',
+      steps:[
+        {cls:'warm',label:'Complete YouTube Growth Thesis',desc:'Study the training before making your first video.'},
+        {cls:'warm',label:'Commit to 1 great video/week',desc:'Consistent output beats perfect output.'},
+        {cls:'mid',label:'Keep Skool networking daily',desc:'Don\'t drop what\'s working while building YouTube.'},
+      ],
+      actions:[
+        {t:'Complete the <strong>YouTube Growth Thesis training</strong> before making your first video'},
+        {t:'Commit to <strong>1 great video per week</strong> — consistency beats perfection'},
+        {t:'Keep doing <strong>Skool networking daily</strong> alongside YouTube'},
+        {t:'More → Better → New. YouTube is the "new" — only after you\'ve done the rest'},
+      ],
+      rule:'Keep doing what\'s working while adding YouTube. Don\'t flip your entire focus — add it on top.'
+    },
+    convert_sales:{
+      stage:3,funnel:1,badge:'badge-convert',badgeText:'Convert — sales bottleneck',
+      title:'Constraint: Convert (low close rate)',
+      sub:`Your close rate from the Sales Tracker is ${cr}% — below the 20% threshold. This is a sales skill problem. The fix is reps, review, and practice — not a new offer or channel.`,
+      steps:[
+        {cls:'mid',label:'Do more calls — accept more unqualified',desc:'6 nos in a row → then 7 yeses. Reps make you better.'},
+        {cls:'mid',label:'Rewatch sales training',desc:'You can\'t master sales from one watch. Re-study script + objections.'},
+        {cls:'cold',label:'Sales roleplay with community',desc:'Post in Synthesizer Scaling: who wants to do a roleplay call?'},
+      ],
+      actions:[
+        {t:'<strong>Rewatch the full Sales Training</strong> — pitch, objection handling, discovery'},
+        {t:'<strong>Record yourself</strong> on calls — find exactly where you lose people'},
+        {t:'<strong>Ask for a sales roleplay</strong> in the Synthesizer Scaling community — people will say yes'},
+        {t:'Accept <strong>more unqualified leads</strong> for the reps — closing improves with volume'},
+      ],
+      rule:'Keep doing sales forever. It\'s the highest leverage thing you can do. Don\'t outsource it yet.'
+    },
+    convert_funnel:{
+      stage:3,funnel:1,badge:'badge-convert',badgeText:'Convert — funnel bottleneck',
+      title:'Constraint: Convert (funnel, not sales)',
+      sub:`Close rate is ${cr}%${cr>=20?' — solid':''}. The bottleneck is converting eyeballs into booked calls. Look at content, CTAs, and calendar availability.`,
+      steps:[
+        {cls:'mid',label:'Switch to niche-specific content',desc:'Stop broad content. Speak to one specific problem.'},
+        {cls:'mid',label:'Track what books calls (not likes)',desc:'Use Bitly/UTM links. Ignore vanity metrics.'},
+        {cls:'cold',label:'Remove barriers + add calendar slots',desc:'Simplify booking flow. More availability = more calls.'},
+      ],
+      actions:[
+        {t:'Switch to <strong>niche-specific content</strong> — speak to one problem your market has'},
+        {t:'<strong>Call leads immediately</strong> when they opt in — speed to lead is everything'},
+        {t:'<strong>Remove barriers</strong> to booking: hard qualifying questions, multiple steps'},
+        {t:'<strong>Add more calendar slots</strong> — half the reason people don\'t book is no time works'},
+      ],
+      rule:'Track what books calls, not what gets likes. Ignore all vanity metrics from this point forward.'
+    },
+    deliver:{
+      stage:4,funnel:2,badge:'badge-deliver',badgeText:'Deliver — capacity bottleneck',
+      title:'Constraint: Deliver (too many clients)',
+      sub:`You have ${clients} clients and delivery is taking over 50% of your time. Stop adding anything new. Prepare to move to a scalable group model.`,
+      steps:[
+        {cls:'cold',label:'Stop adding new things',desc:'Whatever is working — keep doing it. Nothing new.'},
+        {cls:'cold',label:'Prepare group/cohort transition',desc:'Come to implementation calls — this is where to get help.'},
+        {cls:'mid',label:'Bring in appointment setter',desc:'5% commission. Frees time while keeping lead flow.'},
+      ],
+      actions:[
+        {t:'<strong>Stop adding new things</strong> — keep doing only what has worked'},
+        {t:'Prepare to <strong>transition to group/cohort model</strong>'},
+        {t:'Come to <strong>implementation calls and make posts</strong>'},
+        {t:'Consider an <strong>appointment setter</strong> to free up time'},
+      ],
+      rule:'You aren\'t bottlenecked by delivery until it truly breaks. When it breaks, come get help — don\'t guess.'
+    }
+  };
+
+  const r=DIAG[key];
+  const rmHtml=`<div class="rm-bar">${STAGE_NAMES.map((s,i)=>{
+    const cls=i<r.stage?'done':i===r.stage?'current':'ahead';
+    return`<div class="rm-s ${cls}"><div class="rm-dot"></div>${s}</div>`;
+  }).join('')}</div>`;
+  const funnelHtml=`<div class="funnel-bar">${['Attract','Convert','Deliver'].map((s,i)=>`<div class="fb-s ${i===r.funnel?'fb-active':''}">${s}</div>`).join('')}</div>`;
+  const stepsHtml=`<div class="path-steps">${r.steps.map((s,i)=>`${i>0?'<div class="ps-conn"></div>':''}<div class="ps"><div class="ps-n ${s.cls}">${i+1}</div><div><div class="ps-label">${s.label}</div><div>${s.desc}</div></div></div>`).join('')}</div>`;
+
+  document.getElementById('diag-content').innerHTML=`
+    <div class="diag-card">
+      <div class="live-badge"><div class="live-dot"></div>Live — reading your real tracker data</div>
+      ${rmHtml}
+      <span class="badge ${r.badge}">${r.badgeText}</span>
+      <div class="diag-title">${r.title}</div>
+      <div class="diag-sub">${r.sub}</div>
+      ${funnelHtml}
+      <div class="lbl">Live metrics driving this diagnosis</div>
+      <div class="metrics-row">
+        <div class="mc ${clients>0?'good':'bad'}"><div class="mv">${clients}</div><div class="ml">Total clients</div></div>
+        <div class="mc ${dailyBooked>=2?'good':dailyBooked>0?'warn':'bad'}"><div class="mv">${dailyBooked.toFixed(1)}</div><div class="ml">Calls/day avg</div></div>
+        <div class="mc ${cr>=20?'good':cr>0?'bad':''}"><div class="mv">${cr>0?cr+'%':'—'}</div><div class="ml">Close rate</div></div>
+        <div class="mc ${stats.pending>0?'bad':'good'}"><div class="mv">${stats.pending}</div><div class="ml">Open calls</div></div>
+      </div>
+      <div class="diag-section-title">Where to focus right now</div>
+      ${stepsHtml}
+    </div>
+    <div class="diag-card">
+      <div class="lbl">Your next actions</div>
+      <div class="action-list">
+        ${r.actions.map((a,i)=>`<div class="action-item"><div class="action-n">${i+1}</div><div class="action-t">${a.t}</div></div>`).join('')}
+      </div>
+      <div class="rule-box"><strong>Rule to live by:</strong> ${r.rule}</div>
+    </div>`;
+}
+
+// ── NOTES JOURNAL ─────────────────────────────────────────────
+const TAGS=['#win','#stuck','#objection','#idea','#noshow','#followup'];
+const TAG_CLS={'#win':'tag-win','#stuck':'tag-stuck','#objection':'tag-objection','#idea':'tag-idea','#noshow':'tag-noshow','#followup':'tag-followup'};
+const TAG_BORDER={'#win':'has-win','#stuck':'has-stuck','#objection':'has-objection','#idea':'has-idea','#noshow':'has-noshow','#followup':'has-followup'};
+let notesTagFilter='';
+
+function getAllNotes(){
+  const entries=[];
+  MONTHS.forEach((m,mi)=>{
+    const mD=dailyData[m]||{};
+    Object.entries(mD).forEach(([k,d])=>{
+      if(k==='totals')return;
+      if(!d.notes||!d.notes.trim())return;
+      entries.push({month:m,monthIdx:mi,day:parseInt(k),note:d.notes,data:d});
+    });
+  });
+  entries.sort((a,b)=>{
+    if(a.monthIdx!==b.monthIdx)return b.monthIdx-a.monthIdx;
+    return b.day-a.day;
+  });
+  return entries;
+}
+
+function extractTags(text){
+  return TAGS.filter(t=>text.toLowerCase().includes(t));
+}
+
+function renderTagChips(){
+  const allNotes=getAllNotes();
+  const tagCounts={};
+  TAGS.forEach(t=>{tagCounts[t]=allNotes.filter(e=>e.note.toLowerCase().includes(t)).length;});
+  const chips=[{val:'',label:'All'},...TAGS.filter(t=>tagCounts[t]>0).map(t=>({val:t,label:`${t} (${tagCounts[t]})`}))];
+  document.getElementById('notes-tag-chips').innerHTML=chips.map(c=>`
+    <button class="fchip ${notesTagFilter===c.val?'active':''}" onclick="setNotesTag('${c.val}')">${c.label}</button>
+  `).join('');
+}
+
+function setNotesTag(t){notesTagFilter=t;renderNotes();}
+
+function highlightTags(text){
+  let out=text;
+  TAGS.forEach(t=>{
+    const cls=TAG_CLS[t]||'';
+    out=out.replace(new RegExp(t.replace('#','\\#'),'gi'),`<span class="note-tag ${cls}">${t}</span>`);
+  });
+  return out;
+}
+
+function renderNotes(){
+  renderTagChips();
+  const search=(document.getElementById('notes-search')?.value||'').toLowerCase();
+  let entries=getAllNotes();
+
+  if(notesTagFilter) entries=entries.filter(e=>e.note.toLowerCase().includes(notesTagFilter));
+  if(search) entries=entries.filter(e=>e.note.toLowerCase().includes(search)||`${e.month} ${e.day}`.toLowerCase().includes(search));
+
+  document.getElementById('notes-count').textContent=`${entries.length} note${entries.length!==1?'s':''}`;
+
+  if(entries.length===0){
+    document.getElementById('notes-feed').innerHTML=`
+      <div class="note-empty">
+        <div style="font-size:24px;margin-bottom:.5rem">📓</div>
+        ${search||notesTagFilter?'No notes match this filter.':'No notes yet. Start writing in the Daily tab — your notes appear here.'}
+      </div>`;
+    return;
+  }
+
+  let html='';
+  let lastWeekLabel='';
+
+  entries.forEach(e=>{
+    const tags=extractTags(e.note);
+    const borderCls=tags.length>0?TAG_BORDER[tags[0]]:'';
+    const dateLabel=`${e.month.slice(0,3)} ${e.day}, 2026`;
+
+    const weekNum=`${e.month} W${Math.ceil(e.day/7)}`;
+    if(weekNum!==lastWeekLabel){
+      html+=`<div class="notes-week-header">${e.month} · Week ${Math.ceil(e.day/7)}</div>`;
+      lastWeekLabel=weekNum;
+    }
+
+    const cr=e.data.taken>0?Math.round((e.data.customers/e.data.taken)*100):null;
+    const metricChips=[];
+    if(e.data.outreach>0) metricChips.push({label:`${e.data.outreach} DMs`,hi:e.data.outreach>=50,lo:false});
+    if(e.data.booked>0) metricChips.push({label:`${e.data.booked} booked`,hi:e.data.booked>=2,lo:false});
+    if(e.data.taken>0) metricChips.push({label:`${e.data.taken} calls`,hi:false,lo:false});
+    if(cr!==null) metricChips.push({label:`${cr}% close`,hi:cr>=20,lo:cr<20&&e.data.taken>0});
+    if(e.data.revenue>0) metricChips.push({label:`$${e.data.revenue.toLocaleString()}`,hi:true,lo:false});
+
+    html+=`
+      <div class="note-card ${borderCls}" onclick="jumpToDay(${e.monthIdx},${e.day})">
+        <div class="note-date">
+          <span>${dateLabel}</span>
+          <span class="note-date-link">Open day →</span>
+        </div>
+        <div class="note-text">${highlightTags(e.note)}</div>
+        ${metricChips.length>0?`<div class="note-metrics">${metricChips.map(c=>`<span class="note-metric-chip ${c.hi?'highlight':c.lo?'lowlight':''}">${c.label}</span>`).join('')}</div>`:''}
+      </div>`;
+  });
+
+  document.getElementById('notes-feed').innerHTML=html;
+}
+
+function jumpToDay(monthIdx,day){
+  currentMonth=monthIdx;currentDay=day;
+  document.querySelectorAll('.ttab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ttab')[0].classList.add('active');
+  ['daily','sales','overview','diag','notes'].forEach(t=>document.getElementById('tab-'+t).style.display=t==='daily'?'block':'none');
+  renderAll();
+  setTimeout(()=>document.getElementById('day-form')?.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+// ── TAB SWITCHER ──────────────────────────────────────────────
+function switchTab(tab,btn){
+  document.querySelectorAll('.ttab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['daily','sales','overview','diag','notes'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none');
+  if(tab==='sales'){renderSales();}
+  if(tab==='overview'){renderOverview();}
+  if(tab==='diag'){renderDiagnosis();}
+  if(tab==='notes'){notesTagFilter='';renderNotes();}
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>
